@@ -1,0 +1,73 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.input-todo{
+  display:flex;
+  justify-content: flex-start;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+
+.container {
+  display:flex;
+  gap: 20px;
+  height: 100%;
+  width: 100%;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.container .blocks {
+  border: 1px solid #980E09;
+  width: 200px;
+  height: 100%;
+  min-height: 300px;
+  padding: 10px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.container .blocks .header {
+  background-color: #980E09;
+  padding: 5px 10px;
+  border-radius: 2px;
+}
+
+.header h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 16px;
+}
+
+.blocks .todos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+
+.todo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 10px;
+  background-color: #86BBD8;
+  border-radius: 5px;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.todo .action {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.todo p {
+  margin: 0;
+}
