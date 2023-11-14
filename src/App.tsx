@@ -1,116 +1,147 @@
-import { useState, useEffect, useRef, useContext, useMemo, useCallback} from 'react'
-import './App.css'
+import { useState, useEffect, useRef, useMemo, useCallback, useContext, createContext } from "react";
+import "./App.css";
 
-const labels= [{
-  name: "To Do",
-},{
-  name: "In Progress",
-},{
-  name: "In Review",
-},{
-  name: "Done",
-},{
-  name: "Closed",
-}];
+const labels = [
+  {
+    name: "To Do",
+  },
+  {
+    name: "In Progress",
+  },
+  {
+    name: "In Review",
+  },
+  {
+    name: "Done",
+  },
+  {
+    name: "Closed",
+  },
+];
 
 type TodoType = {
-  name : string,
-  status?: string,
-}
+  id: number;
+  name: string;
+  status: string;
+};
+
+const FilterContext = createContext<string>("all");
 
 function App() {
-  
-  useEffect(() => {
-    const todos = localStorage.getItem('todos')
-    if (todos) {
-      setTodos(JSON.parse(todos))
-    }
-    console.log(todos)
-  }
-  , [])
-  const [todos, setTodos] = useState<TodoType[]>([]);
-  useEffect(() => {
-    localStorage.setItem('todos', JSON.stringify(todos))
-  }, [todos])
+  const [todos, setTodos] = useState<TodoType[]>( JSON.parse(localStorage.getItem("todos") || "[]"));
+  const [filter, setFilter] = useState<string>("all");
   const todoInput = useRef<HTMLInputElement>(null);
   const handleAddTodo = useCallback(() => {
-    const todo = todoInput.current
+    const todo = todoInput.current;
     if (todo) {
-      const newTodos = [...todos, {
-        name: todo.value,
-        status: labels[0].name
-      }]
-      setTodos(newTodos)
-      todo.value = ''
+      const lastId = todos[todos.length - 1]?.id || 0;
+      const newTodos = [
+        ...todos,
+        {
+          id: lastId + 1,
+          name: todo.value,
+          status: "To Do",
+        },
+      ];
+      setTodos(newTodos);
+      todo.value = "";
     }
-  }, [todos])
+  }, [todos]);
 
-  const handleStatusChange = (e: any) => {
-    const status = e.target.value
-    const todo = e.target.parentNode.parentNode
-    const todoName = todo.firstChild
+  const handleStatusChange = (status: string, id: number) => {
     const newTodos = todos.map((todo) => {
-      if (todo.name === todoName.textContent) {
+      if (todo.id === id) {
         return {
           ...todo,
-          status
-        }
+          status: status,
+        };
       }
-      return todo
-    })
-    setTodos(newTodos)
+      return todo;
+    });
+    setTodos(newTodos);
+  };
+
+  const handleDeleteTodo = (id: number) => {
+    const newTodos = todos.filter((todo) => todo.id !== id);
+    setTodos(newTodos);
+  };
+
+  const hanldeFilterChange = (filter: string) => {
+    setFilter(filter);
+  };
+
+  const filterTodos = (todos: TodoType[], filter: string) => {
+    if (filter === "all") {
+      return todos;
+    }
+    return todos.filter((todo) => todo.status === filter);
+  };
+
+  const filteredTodos = useMemo(() => filterTodos(todos, filter), [todos, filter]);
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
   }
+  , [todos]);
 
-  const handleDeleteTodo = (e: any) => {
-    const todo = e.target.parentNode.parentNode
-    const todoName = todo.firstChild
-    const newTodos = todos.filter((todo) => todo.name !== todoName.textContent)
-    setTodos(newTodos)
-  }
-
-  
-  
-  
-
+  const filterContext = useContext(FilterContext);
   return (
     <>
-      <div className='input-todo'>
-        <input type="text" id="todo" placeholder="Enter Todo" ref={todoInput} />
+      <div className="input-todo">
+        <input type="text" id="todo" placeholder="Enter Todo" ref={todoInput} onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleAddTodo();
+          }
+        }} />
         <button onClick={handleAddTodo}>Add Todo</button>
       </div>
-      <div className='container'>
-      {labels.map((label, i) => (
-        <div className='blocks' key={i}>
-          <div className='header'>
-            <h2>{label.name}</h2>
+      <div className="container">
+        <div className="blocks">
+          <FilterContext.Provider value={filter}>
+          <div className="header">
+            <h2>List</h2>
+            <div>
+              <select name="filter" id="filter" onChange={(e) => hanldeFilterChange(e.target.value)} defaultValue={filterContext}>
+                <option value="all">All</option>
+                {labels.map((label, i) => (
+                  <option key={i} value={label.name}>
+                    {label.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div className='todos'>
-            {todos.map((todo, j) => {
-              if (todo.status === label.name) {
-                return (
-                  <div className='todo' key={j}>
-                    <p>{todo.name}</p>
-                    <div className='action'>
-                      <select name="status" id="status" onChange={handleStatusChange} defaultValue={todo.status}>
-                        {labels.map((label, k) => (
-                          <option key={k} value={label.name}>{label.name}</option>
-                        ))}
-                      </select>
-                      <button onClick={handleDeleteTodo}>
-                        Delete
-                      </button>
-                    </div>
+          </FilterContext.Provider>
+          <div className="todos">
+            {filteredTodos.map((todo, i) => {
+              return (
+                <div className="todo" key={i}>
+                  <p>{todo.name}</p>
+                  <div className="action">
+                    <select
+                      name={`status-${todo.id}`}
+                      id={`status-${todo.id}`}
+                      onChange={(e) => {
+                        handleStatusChange(e.target.value, todo.id);
+                      }}
+                      defaultValue={todo.status}
+                    >
+                      {labels.map((label, k) => (
+                        <option key={k} value={label.name}>
+                          {label.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button onClick={() => handleDeleteTodo(todo.id)
+                    }>Delete</button>
                   </div>
-                )
-              }
-            }
-            )}
+                </div>
+              );
+            })}
           </div>
         </div>
-      ))}
       </div>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
