@@ -1,5 +1,8 @@
-import { useState, useEffect, useRef, useMemo, useCallback, useContext, createContext } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { FilterContext } from "./contexts/FilterContext";
 import "./App.css";
+import Select from "./components/Select";
+import { useTodo } from "./hooks/UseTodo";
 
 const labels = [
   {
@@ -25,10 +28,9 @@ type TodoType = {
   status: string;
 };
 
-const FilterContext = createContext<string>("all");
 
 function App() {
-  const [todos, setTodos] = useState<TodoType[]>( JSON.parse(localStorage.getItem("todos") || "[]"));
+  const {todos, setTodos} = useTodo()
   const [filter, setFilter] = useState<string>("all");
   const todoInput = useRef<HTMLInputElement>(null);
   const handleAddTodo = useCallback(() => {
@@ -38,15 +40,15 @@ function App() {
       const newTodos = [
         ...todos,
         {
-          id: lastId + 1,
-          name: todo.value,
+          id: lastId + 1 as number,
+          name: todo.value as string,
           status: "To Do",
         },
       ];
       setTodos(newTodos);
       todo.value = "";
     }
-  }, [todos]);
+  }, [todos, setTodos])
 
   const handleStatusChange = (status: string, id: number) => {
     const newTodos = todos.map((todo) => {
@@ -83,7 +85,6 @@ function App() {
   }
   , [todos]);
 
-  const filterContext = useContext(FilterContext);
   return (
     <>
       <div className="input-todo">
@@ -100,14 +101,7 @@ function App() {
           <div className="header">
             <h2>List</h2>
             <div>
-              <select name="filter" id="filter" onChange={(e) => hanldeFilterChange(e.target.value)} defaultValue={filterContext}>
-                <option value="all">All</option>
-                {labels.map((label, i) => (
-                  <option key={i} value={label.name}>
-                    {label.name}
-                  </option>
-                ))}
-              </select>
+              <Select options={labels} onChange={(e) => hanldeFilterChange(e.target.value)} />
             </div>
           </div>
           </FilterContext.Provider>
@@ -123,7 +117,7 @@ function App() {
                       onChange={(e) => {
                         handleStatusChange(e.target.value, todo.id);
                       }}
-                      defaultValue={todo.status}
+                      value={todo.status}
                     >
                       {labels.map((label, k) => (
                         <option key={k} value={label.name}>
